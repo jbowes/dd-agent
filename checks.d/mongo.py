@@ -128,6 +128,23 @@ class MongoDb(AgentCheck):
         "tcmalloc.tcmalloc.transfer_cache_free_bytes": GAUGE,
     }
 
+    WIREDTIGER_METRICS = {
+        "wiredTiger.cache.bytes currently in the cache": GAUGE,
+        "wiredTiger.cache.failed eviction of pages that exceeded the in-memory maximum": GAUGE,
+        "wiredTiger.cache.in-memory page splits": GAUGE,
+        "wiredTiger.cache.maximum bytes configured": GAUGE,
+        "wiredTiger.cache.maximum page size at eviction": GAUGE,
+        "wiredTiger.cache.pages currently held in the cache": GAUGE,
+        "wiredTiger.cache.pages evicted because they exceeded the in-memory maximum": GAUGE,
+        "wiredTiger.cache.pages evicted by application threads": GAUGE,
+        "wiredTiger.concurrentTransactions.read.available": GAUGE,
+        "wiredTiger.concurrentTransactions.read.out": GAUGE,
+        "wiredTiger.concurrentTransactions.read.totalTickets": GAUGE,
+        "wiredTiger.concurrentTransactions.write.available": GAUGE,
+        "wiredTiger.concurrentTransactions.write.out": GAUGE,
+        "wiredTiger.concurrentTransactions.write.totalTickets": GAUGE,
+    }
+
     def __init__(self, name, init_config, agentConfig, instances=None):
         AgentCheck.__init__(self, name, init_config, agentConfig, instances)
         self._last_state_by_server = {}
@@ -182,7 +199,11 @@ class MongoDb(AgentCheck):
         })
 
     @classmethod
-    def _build_metric_list_to_collect(cls, collect_tcmalloc_metrics=False):
+    def _build_metric_list_to_collect(
+            cls,
+            collect_tcmalloc_metrics=False,
+            collect_wiredtiger_metrics=False
+        ):
         """
         Build the metric list to collect based on the instance preferences.
         """
@@ -195,6 +216,8 @@ class MongoDb(AgentCheck):
         # Optional metrics
         if collect_tcmalloc_metrics:
             metrics_to_collect.update(cls.TCMALLOC_METRICS)
+        if collect_wiredtiger_metrics:
+            metrics_to_collect.update(cls.WIREDTIGER_METRICS)
 
         return metrics_to_collect
 
@@ -252,9 +275,13 @@ class MongoDb(AgentCheck):
         collect_tcmalloc_metrics = _is_affirmative(
             instance.get('collect_tcmalloc_metrics', False)
         )
+        collect_wiredtiger_metrics = _is_affirmative(
+            instance.get('collect_wiredtiger_metrics', False)
+        )
         metrics_to_collect = self._get_metrics_to_collect(
             server,
             collect_tcmalloc_metrics=collect_tcmalloc_metrics,
+            collect_wiredtiger_metrics=collect_wiredtiger_metrics,
         )
 
         # de-dupe tags to avoid a memory leak

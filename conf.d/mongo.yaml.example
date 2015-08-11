@@ -23,3 +23,7 @@ instances:
     # The (optional) collect_tcmalloc_metrics parameter will instruct
     # the check to collect TCMalloc memory allocator metrics (default to False).
     # collect_tcmalloc_metrics: False
+    #
+    # The (optional) collect_wiredtiger_metrics parameter will instruct
+    # the check to collect WiredTiger storage engine metrics (default to False).
+    # collect_wiredtiger_metrics: False
