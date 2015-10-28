@@ -28,6 +28,10 @@ def get_mocked_temp():
         'flare'
     )
 
+mock_cfgs = {
+    'uri_password' : 'password_uri.yaml',
+}
+
 
 def mocked_strftime(t):
     return '1'
@@ -121,3 +125,16 @@ class FlareTest(unittest.TestCase):
             raise Exception('Should fail before')
         except Exception, e:
             self.assertEqual(str(e), "Your request is incorrect: Invalid inputs: 'API key unknown'")
+
+    @attr(requires='core_integration')
+    @mock.patch('utils.flare.strftime', side_effect=mocked_strftime)
+    @mock.patch('tempfile.gettempdir', side_effect=get_mocked_temp)
+    @mock.patch('utils.flare.get_config', side_effect=get_mocked_config)
+    def test_uri_password(self, mock_config, mock_tempdir, mock_strftime):
+        f = Flare()
+        _, password_found = f._strip_password(os.path.join(get_mocked_temp(), mock_cfgs['uri_password']))
+        self.assertEqual(
+            password_found,
+            " - this file contains a password in a uri which has been removed in the version collected"
+        )
+
