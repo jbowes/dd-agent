@@ -1,6 +1,7 @@
 # stdlib
 import os.path
 import unittest
+import re
 
 # 3p
 import mock
@@ -30,6 +31,11 @@ def get_mocked_temp():
 
 mock_cfgs = {
     'uri_password' : 'password_uri.yaml',
+}
+
+password_tests = {
+    'uri_password' : '      -   server: mongodb://datadog:V3pZC7ghx1ne82XkyqLnOW36@localhost:27017/admin',
+    'uri_password_expected' : '      -   server: mongodb://datadog:********@localhost:27017/admin',
 }
 
 
@@ -138,3 +144,14 @@ class FlareTest(unittest.TestCase):
             " - this file contains a password in a uri which has been removed in the version collected"
         )
 
+    @attr(requires='core_integration')
+    @mock.patch('utils.flare.strftime', side_effect=mocked_strftime)
+    @mock.patch('tempfile.gettempdir', side_effect=get_mocked_temp)
+    @mock.patch('utils.flare.get_config', side_effect=get_mocked_config)
+    def test_uri_password_regex(self, mock_config, mock_tempdir, mock_strftime):
+        f = Flare()
+        line = re.sub(f.URI_REGEX, r'\1://\2:********@', password_tests['uri_password'])
+        self.assertEqual(
+            line,
+            password_tests['uri_password_expected']
+        )
